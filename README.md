@@ -1,6 +1,6 @@
 # FileSynchronizer
 
-Good day, I would like to introduce you to a program for synchronizing two directories - the source and the target. This program allows you to automatically copy files from the source to the target directory if they have been modified or added to the source. Also, if files or directories have been deleted in the source, they will be removed in the target directory as well.
+А program for synchronizing two directories - the source and the target. This program allows you to automatically copy files from the source to the target directory if they have been modified or added to the source. Also, if files or directories have been deleted in the source, they will be removed in the target directory as well.
 
 The program is very easy to use and does not require any special knowledge. To get started, you just need to specify the path to the source and target directories. After that, the program will start monitoring changes in the source directory and automatically copy modified files to the target directory.
 
