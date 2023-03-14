@@ -7,5 +7,5 @@ The program is very easy to use and does not require any special knowledge. To g
 In program has a feature that allows it to work as a service. To enable this feature, you need to use the -install argument.
 
 Options will be added later:
-Additionally, the program has the ability to adjust synchronization parameters, such as the delay time between checking for //changes, ignoring certain files or directories, and others.
+Additionally, the program has the ability to adjust synchronization parameters, such as the delay time between checking for changes, ignoring certain files or directories, and others.
 
