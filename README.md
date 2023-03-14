@@ -1,4 +1,6 @@
 # FileSynchronizer
+ 
+ To start working, simply specify the paths to the source and target directories in FileSynchronizer.ini.
 
 А program for synchronizing two directories - the source and the target. This program allows you to automatically copy files from the source to the target directory if they have been modified or added to the source. Also, if files or directories have been deleted in the source, they will be removed in the target directory as well.
 
