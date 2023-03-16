@@ -62,8 +62,10 @@ namespace FileSynchronizer
             {
                 sourcePath2 = reader.ReadLine();
                 destinationPath2 = reader.ReadLine();
+                string delaystr = reader.ReadLine();
+                delayTime = int.Parse(delaystr.Substring(6));
             }
-
+            //Console.Write(delayTime);
             if (!Directory.Exists(sourcePath2))
             {
                 Directory.CreateDirectory(sourcePath2);
@@ -100,6 +102,7 @@ namespace FileSynchronizer
                 Console.WriteLine("-delay (-d)     | Delay time. Default 1 sec. Example: -d 10");
                 return;
             }
+
 
 
             bool startJob = false;
