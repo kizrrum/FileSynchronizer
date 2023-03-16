@@ -8,7 +8,7 @@
     <OutputType>Exe</OutputType>
     <RootNamespace>FileSynchronizer</RootNamespace>
     <AssemblyName>FileSynchronizer</AssemblyName>
-    <LangVersion>11</LangVersion>
+	<LangVersion>8.0</LangVersion>
     <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -60,11 +60,6 @@
   </ItemGroup>
   <ItemGroup>
     <WCFMetadata Include="Connected Services\" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="NLog">
-      <Version>5.1.2</Version>
-    </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
