@@ -301,7 +301,7 @@ namespace FileSynchronizer
                 CopyDirectory(sourcePath2, destinationPath2);
                 Deloutsync(sourcePath2, destinationPath2);
 
-                Thread.Sleep(delayTime * 1000);
+                Thread.Sleep(Program.delayTime * 1000);
                 //Thread.Sleep(1000);
                 if (cancl == true)
                 { break; }
@@ -383,15 +383,6 @@ namespace FileSynchronizer
             catch (UnauthorizedAccessException)
             {
             }
-            //}
-            //catch (Exception ex)
-            // {
-            if (Consolemode)
-            { //Console.WriteLine($"An error occurred: {ex.Message}"); 
-
-                // _logFile.WriteToFile(DateTime.Now + "," + $"An error occurred: {ex.Message}");
-            }
-            // }
         }
 
         public static void CopyDirectory(string sourcePath, string destinationPath)
