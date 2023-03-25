@@ -10,6 +10,7 @@ using System.Reflection;
 using System.Security.Principal;
 using System.ServiceProcess;
 using System.Threading;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace FileSynchronizer
 {
@@ -43,7 +44,8 @@ namespace FileSynchronizer
     {
         //private static readonly LogFile _logFile = new LogFile("sync.log");
         public static string logFile = AppDomain.CurrentDomain.BaseDirectory + "sync.log";
-        public static bool Consolemode;
+       
+    public static bool Consolemode;
         public static int delayTime = 1;
         public static string FileSynchronizerSvc = "FileSynchronizerSvc";
         public static string exactPath = AppDomain.CurrentDomain.BaseDirectory;
@@ -54,17 +56,34 @@ namespace FileSynchronizer
             //var MyIni = new IniFile();
             //sourcePath2 = MyIni.Read(@"sourcePath");
             //destinationPath2 = MyIni.Read(@"destinationPath");
-
+            if (!File.Exists(logFile))
+            {
+                File.Create(logFile).Close();
+            }
             sourcePath2 = null;
             destinationPath2 = null;
-
-            using (StreamReader reader = new StreamReader(filePath))
+            if (File.Exists(filePath))
             {
-                sourcePath2 = reader.ReadLine();
-                destinationPath2 = reader.ReadLine();
-                string delaystr = reader.ReadLine();
-                delayTime = int.Parse(delaystr.Substring(6));
+                using (StreamReader reader = new StreamReader(filePath))
+                {
+                    sourcePath2 = reader.ReadLine();
+                    destinationPath2 = reader.ReadLine();
+                    string delaystr = reader.ReadLine();
+                    //delayTime = int.Parse(delaystr.Substring(6));
+                    string numericText = new String(delaystr.Where(Char.IsDigit).ToArray());
+                    int delayTime = int.Parse(numericText);
+                    Console.WriteLine("sourcePath " + sourcePath2);
+                    Console.WriteLine("destinationPath " + destinationPath2);
+                    Console.WriteLine("delayTime " + delayTime);
+                    //  Console.ReadLine();
+                }
             }
+            else
+            {
+                { Console.WriteLine("FileSynchronizer.ini not found ");  }
+                Environment.Exit(0);
+            }
+
             //Console.Write(delayTime);
             if (!Directory.Exists(sourcePath2))
             {
@@ -212,9 +231,11 @@ namespace FileSynchronizer
                         Console.WriteLine(result);
                     }
                 }
+                else { Console.WriteLine("Error: ServiceExists"); Environment.Exit(0); }
+                // _logger.Debug("ServiceExists");
             }
-            else { Console.WriteLine("run as administrator"); }
-
+            else { Console.WriteLine("Error: run as administrator");  Environment.Exit(0); }
+            //_logger.Debug("run as administrator");
         }
 
         private static void Uninstall()
@@ -231,8 +252,9 @@ namespace FileSynchronizer
                     p.Start();
                     Thread.Sleep(1000);
                 }
-                else { Console.WriteLine("run as administrator"); }
+
             }
+            else { Console.WriteLine("run as administrator"); }
         }
         public static bool cancl = false;
         public static string sourcePath2;
@@ -310,40 +332,56 @@ namespace FileSynchronizer
             string[] destinationFiles = Directory.GetFiles(destinationPath, "*", SearchOption.AllDirectories);
             string[] destinationDirectories = Directory.GetDirectories(destinationPath, "*", SearchOption.AllDirectories);
             // Удаляем файлы, которых нет в sourcePath
-            // try
-            // {
-            foreach (string file in destinationFiles)
+            try
             {
-                string fileName = Path.GetFileName(file);
-                string fileDirectory = Path.GetDirectoryName(file).Replace(destinationPath, sourcePath);
-
-                if (!sourceFiles.Any(f => Path.GetFileName(f) == fileName && Path.GetDirectoryName(f) == fileDirectory))
+                foreach (string file in destinationFiles)
                 {
-                    if (Consolemode)
-                    {
-                        Console.WriteLine($"{fileName} already exists. delete");
+                    string fileName = Path.GetFileName(file);
+                    string fileDirectory = Path.GetDirectoryName(file).Replace(destinationPath, sourcePath);
 
-                        //File.AppendAllText(logFile, DateTime.Now + "," + $"{fileName} already exists. delete" + Environment.NewLine);                       
+                    if (!sourceFiles.Any(f => Path.GetFileName(f) == fileName && Path.GetDirectoryName(f) == fileDirectory))
+                    {
+                        if (Consolemode)
+                        {
+                            Console.WriteLine($"{fileName} already exists. delete");
+
+                            //File.AppendAllText(logFile, DateTime.Now + "," + $"{fileName} already exists. delete" + Environment.NewLine);                       
+                        }
+                        _logger.Debug($"{fileName} already exists. delete");
+                        File.Delete(file);
                     }
-                    _logger.Debug($"{fileName} already exists. delete");
-                    File.Delete(file);
                 }
             }
-            // Удаляем каталоги, которых нет в sourcePath
-            foreach (string directory in destinationDirectories)
+            catch (DirectoryNotFoundException)
             {
-                string directoryName = Path.GetFileName(directory);
-                string directoryParent = Path.GetDirectoryName(directory).Replace(destinationPath, sourcePath);
-
-                if (!sourceDirectories.Any(d => Path.GetFileName(d) == directoryName && Path.GetDirectoryName(d) == directoryParent))
+            }
+            catch (UnauthorizedAccessException)
+            {
+            }
+            // Удаляем каталоги, которых нет в sourcePath
+            try
+            {
+                foreach (string directory in destinationDirectories)
                 {
-                    if (Consolemode)
+                    string directoryName = Path.GetFileName(directory);
+                    string directoryParent = Path.GetDirectoryName(directory).Replace(destinationPath, sourcePath);
+
+                    if (!sourceDirectories.Any(d => Path.GetFileName(d) == directoryName && Path.GetDirectoryName(d) == directoryParent))
                     {
-                        Console.WriteLine($"{directory} already exists. delete");
+                        if (Consolemode)
+                        {
+                            Console.WriteLine($"{directory} already exists. delete");
+                        }
+                        _logger.Debug($"{directory} already exists. delete");
+                        Directory.Delete(directory, true);
                     }
-                    _logger.Debug($"{directory} already exists. delete");
-                    Directory.Delete(directory, true);
                 }
+            }
+            catch (DirectoryNotFoundException)
+            {
+            }
+            catch (UnauthorizedAccessException)
+            {
             }
             //}
             //catch (Exception ex)
@@ -372,24 +410,37 @@ namespace FileSynchronizer
             _config.LoggingRules.Add(new LoggingRule("*", LogLevel.Debug, _fileTarget));
             LogManager.Configuration = _config;
             _logger = LogManager.GetCurrentClassLogger();
-            // Создаем директорию назначения, если она не существует
-            if (!Directory.Exists(destinationPath))
+
+            try
             {
-                Directory.CreateDirectory(destinationPath);
-                if (Consolemode) { Console.WriteLine(DateTime.Now + "," + $"{destinationPath} already created."); }
-                _logger.Debug($"{destinationPath} already created.");
-            }
-            // Копируем файлы
-            foreach (string filePath in Directory.GetFiles(sourcePath))
-            {
-                string newFilePath = Path.Combine(destinationPath, Path.GetFileName(filePath));
-                // try
-                // {
-                if (File.Exists(newFilePath))
+                // Создаем директорию назначения, если она не существует
+                if (!Directory.Exists(destinationPath))
                 {
-                    DateTime sourceLastWriteTime = File.GetLastWriteTime(filePath);
-                    DateTime destinationLastWriteTime = File.GetLastWriteTime(newFilePath);
-                    if (sourceLastWriteTime > destinationLastWriteTime)
+                    Directory.CreateDirectory(destinationPath);
+                    if (Consolemode) { Console.WriteLine(DateTime.Now + "," + $"{destinationPath} already created."); }
+                    _logger.Debug($"{destinationPath} already created.");
+                }
+                // Копируем файлы
+                foreach (string filePath in Directory.GetFiles(sourcePath))
+                {
+                    string newFilePath = Path.Combine(destinationPath, Path.GetFileName(filePath));
+                    // try
+                    // {
+                    if (File.Exists(newFilePath))
+                    {
+                        DateTime sourceLastWriteTime = File.GetLastWriteTime(filePath);
+                        DateTime destinationLastWriteTime = File.GetLastWriteTime(newFilePath);
+                        if (sourceLastWriteTime > destinationLastWriteTime)
+                        {
+                            File.Copy(filePath, newFilePath, true);
+                            if (Consolemode)
+                            {
+                                Console.WriteLine($"{filePath} already copied.");
+                            }
+                            _logger.Debug($"{filePath} already copied.");
+                        }
+                    }
+                    else
                     {
                         File.Copy(filePath, newFilePath, true);
                         if (Consolemode)
@@ -398,33 +449,39 @@ namespace FileSynchronizer
                         }
                         _logger.Debug($"{filePath} already copied.");
                     }
-                }
-                else
-                {
-                    File.Copy(filePath, newFilePath, true);
+                    // }
+                    //catch (IOException ex)
+                    //{
+                    // Обработка ошибки
                     if (Consolemode)
-                    {
-                        Console.WriteLine($"{filePath} already copied.");
-                    }
-                    _logger.Debug($"{filePath} already copied.");
-                }
-                // }
-                //catch (IOException ex)
-                //{
-                // Обработка ошибки
-                if (Consolemode)
-                {// Console.WriteLine($"error {filePath}: {ex.Message}"); 
+                    {// Console.WriteLine($"error {filePath}: {ex.Message}"); 
 
-                    //  _logFile.WriteToFile(DateTime.Now + "," + $"error {filePath}: {ex.Message}");
+                        //  _logFile.WriteToFile(DateTime.Now + "," + $"error {filePath}: {ex.Message}");
+                    }
+                    //}
                 }
-                //}
             }
-            // Рекурсивно копируем вложенные директории
-            foreach (string directoryPath in Directory.GetDirectories(sourcePath))
+            catch (DirectoryNotFoundException)
             {
-                Thread.Sleep(1000);
-                string newDirectoryPath = Path.Combine(destinationPath, Path.GetFileName(directoryPath));
-                CopyDirectory(directoryPath, newDirectoryPath);
+            }
+            catch (UnauthorizedAccessException)
+            {
+            }
+            try
+            {
+                // Рекурсивно копируем вложенные директории
+                foreach (string directoryPath in Directory.GetDirectories(sourcePath))
+                {
+                    Thread.Sleep(1000);
+                    string newDirectoryPath = Path.Combine(destinationPath, Path.GetFileName(directoryPath));
+                    CopyDirectory(directoryPath, newDirectoryPath);
+                }
+            }
+            catch (DirectoryNotFoundException)
+            {
+            }
+            catch (UnauthorizedAccessException)
+            {
             }
         }
 
